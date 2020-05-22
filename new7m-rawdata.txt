@@ -1,0 +1,39 @@
+Delprojekt 6 - RAW-data inställningar med Linux och CLI
+För att skicka inställningar till GPS-modulen via den seriella kontakten skrev jag ihop ett litet program i python som skickar data direkt till gps-chipet.
+Jag använde mig av biblioteket serial och sedan skickade jag data till modulen. Jag har gjort två program för testets skulle men allt kan sitta ihop i ett program. Det första programmet skickar data i en hastighet av 9600 och aktiverar UBX och rätt hastighet på GPS-moudlen och det andra skickar i en hastighet av 115200 och aktiverar RAW-data från modulen. Du kan vara tvungen att installera serial paketet för python genom att köra. För att kunna installera pyserial behöver du köra följande kommandon.
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo pip insall python-pip
+GeSHi ©
+Detta installerar PIP som är en installationshanterare för paket till python
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo pip install pyserial
+GeSHi ©
+Detta är modulen så vi kan kommunicera seriellt i python.
+Här är koden för att sätta hastigheten.
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+import serial
+
+ser = serial.Serial('/dev/ttyAMA0',9600)
+print 'Sending set UBX out and speed 115200'
+command = b'\xB5\x62\x06\x00\x14\x00\x01\x00\x00\x00\xD0\x08\x00\x00\x00\xC2\x01\x00\x01\x00\x01\x00\x00\x00\x00\x00\xB8\x42'
+ser.write(command)
+GeSHi ©
+
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+import serial
+
+ser = serial.Serial('/dev/ttyAMA0',115200)
+print 'Sending set TRK-TRKD5'
+command = b'\xB5\x62\x06\x01\x03\x00\x03\x0A\x01\x18\x5D'
+ser.write(command)
+print 'Send set TRK-SFRBX'
+command = b'\xB5\x62\x06\x01\x03\x00\x03\x0F\x01\x1D\x67'
+ser.write(command)
+print 'Sending set NAV-CLOCK'
+command = b'\xB5\x62\x06\x01\x03\x00\x01\x22\x01\x2E\x87'
+ser.write(command)
+print 'Sending set NAV-SVINFO'
+command = b'\xB5\x62\x06\x01\x03\x00\x01\x30\x01\x3C\xA3'
+ser.write(command)
+GeSHi ©
+Klart!
