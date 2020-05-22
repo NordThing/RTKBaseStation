@@ -1,0 +1,81 @@
+Delprojekt 4 - Få Rasperry Pi att fungera med Ublox Neo-7M
+För att kommunicera med Ublox Neo-7M kommer jag att använda mig av seriell data, många guider på nätet föreslår USB. Eftersom RPI har ett GPIO interface med TX och RX tycker jag att detta ska användas. Vi har ju i tidigare del med HMC5883L kopplat in oss på I2C-kretsen. Nu ska vi koppla in oss på UART som det också heter.
+
+RPI 1 och RPI 2
+Serieporten på linux går under namnet /dev/ttyAMA0 och det är hit vi ska koppla vår GPS. Standard på RPI är att denna är kopplad så att du ska logga in med ett seriellt interface den vägen, men det ska vi inte göra. Så vi ska ta och avaktivera detta och göra den tillgänglig för GPS-chipet.
+RPI 3
+/dev/ttyAMA0 är nu upptagen av bluetooth som finns på RPI 3 - så nu har vår seriella port /dev/ttyS0 som namn istället. Som standard på RPI 3 är UART inaktiverad så vi behöver modifiera en fil som under /boot/config.txt och lägga till en rad som heter enable_uart=1.
+
+Vi ska ändra i en fil som heter cmdline.txt så det första vi gör med denna fil är att vi tar en backup ifall något skulle bli fel.
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo cp /boot/cmdline.txt /boot/cmdline.txt.backup
+GeSHi ©
+Nu ska vi avaktivera en funktion i cmdline.txt detta gör i genom att editera filen
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo nano /boot/cmdline.txt
+GeSHi ©
+Ändra
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+GeSHi ©
+till
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait
+GeSHi ©
+Det vi har gjort är att inaktiverat två funktioner.
+!!VIKTIGT ATT INTE GÖRA NÅGRA RADBRYT HÄR - ALLT SKA VARA PÅ SAMMA RAD!!
+
+
+Inittab är ersatt av systemd i nyare distar till RPI - så denna punkt är troligtvis inte nödvändig längre
+Sedan ska vi inaktivera ytterligare funktioner i en annan fil som heter inittab så ta en backup på denna först genom att skriva
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo cp /etc/inittab /etc/inittab.backup
+GeSHi ©
+Editera filen genom att skriva
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo nano /etc/inittab
+GeSHi ©
+Nästan längst ner i filen hittar du följande rad
+Citera:
+#Spawn a getty on Raspberry Pi serial line
+T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+Framför den andra raden sätter du en hashtag så att det efteråt ser ut så här
+Citera:
+#Spawn a getty on Raspberry Pi serial line
+#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+
+och nu kan vi stänga av RPI genom att ta ut sladden för vi ska koppla ihop Ublox NEO-7M med GPIO-portarna på RPI.
+Här kommer hur jag har gjort. Anledningen till att jag gått via breadboardet är att jag inte hade några hona - hona kontakter så detta får duga.
+
+Ublox Neo-7M-000 -- RPI
+VCC --> Pin nr 1 (VCC)
+GND --> Pin nr 6 (GND)
+RX --> Pin nr 8 (TX)
+TX --> Pin nr 10 (RX)
+WP_20150918_13_41_50_Pro (1).jpg
+WP_20150918_13_41_50_Pro (1).jpg [ 203.67 KiB | Visad 1595 gånger ]
+
+
+När detta är gjort ska vi starta upp RPI och installera program för att se om vi har någon kontakt med modulen.
+Vi ska installera ett program som heter gpsd och det finns några program som krävs ytterligare för att detta ska fungera så kör följande kommando
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo apt-get install gpsd gpsd-clients python-gps
+GeSHi ©
+Efter att programmet är installerat ska vi starta denna tjänst genom att skriva
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+sudo service gpsd start
+GeSHi ©
+För att se om GPSen fungerar skriver vi nu följande kommando som startar upp ett gränssnitt där vi kan se var vi befinner oss och vilka satelliter vi har kontakt med så kör följande
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+cgps -s
+GeSHi ©
+Om det blir timeout när du startar denna beror det troligtvis på att du inte har fått en "fix" ännu. Om GPS:en inte blinkar grönt konstant med ca 1s intervall så har du ingen fix på GPSen.
+
+Om man är osäker på att det verkligen kommer utdata från GPSen kan prova följande kommando
+Kod: [Expandera/Minimera] [Hämta] (Untitled.txt)
+(RPI,RPI2)gpscat /dev/ttyAMA0
+(RPI3)gpscat /dev/ttyS0
+GeSHi ©
+Här kommer det spottas ut NMEA meningar även om du inte fått en fix på din position.
+
+Nu ska du få utdata från GPSen från RPI.
