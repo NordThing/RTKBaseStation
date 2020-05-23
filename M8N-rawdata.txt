@@ -1,0 +1,31 @@
+Har nu nya GPS-moduler som heter Ublox M8N - men det verkar vara piratkopierade.. när man läser QR-koden från dem står det att det är ett serienr från NEO-6M och ett serienr. När jag använder U-center så får jag upp att det är M8N med firmware 2.01. Och firmware 2.01 är ju det som krävs för att få ut TRK-MEAS och TRK-SFRB från modulerna för att kunna användas i RTKLIB. Jag ser även i U-center att den plockas nu både GPS och GLONASS signaler simultant, något som INTE NEO-6M och NEO-7M gör, detta krävs för högre precision och snabbare FIX när RTKLIB används.
+
+Den här delen kommer bestå i hur man aktiverar TRK-MEAS och TRK-SFRBX i modulen med hjälp av HEX-koder som jag sedan lägger upp på OpenStreetmap.
+
+Jag har sett i U-center att jag får ut meddelande 03-10 och 03-0F som är TRK-MEAS och TRK-SFRBX när jag kör DEBUG-läge i U-center.
+
+Följande HEX-koder används för att aktivera de två lägen:
+TRK-MEAS 03x10
+B5 62 06 01 03 00 03 10 01 1E 69
+TRK-SFRBX 03x0F
+B5 62 06 01 03 00 03 0F 01 1D 67
+
+När jag använde mig av NEO-7M använde jag även de här så här kommer HEX-koderna för att aktivera de med M8N
+NAV-CLOCK
+B5 62 06 01 03 00 01 22 01 2E 87
+NAV-SVINFO
+B5 62 06 01 03 00 01 30 01 3C A3
+
+Jag ska även ändra hastigheten till 115200 och frekvensen till 200ms så jag får utdata i 5hZ.
+200ms för 5hZ
+B5 62 06 08 06 00 C8 00 01 00 01 00 DE 6A
+100ms för 10hZ
+B5 62 06 08 06 00 64 00 01 00 01 00 7A 12
+115200 på UART1
+B5 62 06 00 14 00 01 00 00 00 D0 08 00 00 00 C2 01 00 07 00 03 00 00 00 00 00 C0 7E
+
+Även om M8N var piratkopierade så fungerar de ypperligt för tillfället när jag kör dessa mot en annan basstation, jag får då upp både GLONASS och GPS och har 12 satelliter jag kan låsa mot. Det gör även att jag får FIX efter 2-3 minuter så nu börjar det likna något. Sedan blir ju utmaningen när gräsklipparen rör på sig att behålla FIX.
+
+TYPISKT - jag har ju köpt en antenn som arbetar enbart mot GPS alltså 1575,42MHz +/-10MHz. GNSS arbetar ju lite högre runt 1600 så signalstyrkan på GNSS är väldigt låg. Behöver med andra ord en ny antenn..
+
+Fortsättningen följer..
